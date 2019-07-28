@@ -1,12 +1,17 @@
 module WienerHopf
-using ApproxFun, SingularIntegralEquations, RiemannHilbert, DualNumbers
+using ApproxFun, SingularIntegralEquations, RiemannHilbert, ForwardDiff
 
 import ApproxFunBase: SegmentDomain, fromcanonical, tocanonical, angle,
                         reverseorientation, isambiguous, arclength,
                         leftendpoint, rightendpoint, complexlength,
-                        AnyDomain, tocanonicalD, fromcanonicalD
-
+                        AnyDomain, tocanonicalD, fromcanonicalD,
+                        setcanonicaldomain, mappoint
+import SingularIntegralEquations: stieltjes, stieltjesmoment!, undirected
 import Base: convert, isempty, +, -, *, ==    
+import ForwardDiff: derivative
+import RiemannHilbert: RiemannDual, finitepart, 
+            fpleftstieltjesmoment!, fprightstieltjesmoment!
+            
 
 export SqrtLine
 
@@ -66,8 +71,8 @@ end
 sqrtline_tocanonical(x) = ifourtoone(x)
 sqrtline_fromcanonical(x) = fourtoone(x)
 
-sqrtline_tocanonicalD(x) = dualpart(ifourtoone(dual(x,1)))
-sqrtline_fromcanonicalD(x) = dualpart(fourtoone(dual(x,1)))
+sqrtline_tocanonicalD(x) = derivative(ifourtoone,x)
+sqrtline_fromcanonicalD(x) = derivative(fourtoone,x)
 
 
 tocanonical(d::SqrtLine,x) = sqrtline_tocanonical(cis(-angle(d)).*(x-d.center))
@@ -90,14 +95,7 @@ invfromcanonicalD(d::SqrtLine,x) = cis(-angle(d))*sqrtline_invfromcanonicalD(x)
 invfromcanonicalD(d::SqrtLine{false},x) = sqrtline_invfromcanonicalD(x)
 invfromcanonicalD(d::SqrtLine{true},x) = -sqrtline_invfromcanonicalD(x)
 
-
-
-
-
-
-==(d::SqrtLine{a},m::SqrtLine{a}) where {a} = d.center == m.center && d.β == m.β &&d.α == m.α
-
-
+==(d::SqrtLine{a},m::SqrtLine{a}) where {a} = d.center == m.center
 
 # algebra
 *(c::Real,d::SqrtLine{false}) = SqrtLine{sign(c)>0 ? false : true}(isapprox(d.center,0) ? d.center : c*d.center,d.α,d.β)
@@ -111,15 +109,48 @@ for OP in (:+,:-)
     end
 end
 
-
-
-
-
-
 # algebra
 arclength(d::SqrtLine) = Inf
 leftendpoint(d::SqrtLine) = -Inf
 rightendpoint(d::SqrtLine) = Inf
 complexlength(d::SqrtLine) =Inf
+
+
+# Sum over all inverses of fromcanonical, see [Olver,2014]
+
+fpstieltjes(s,f,z) = finitepart(stieltjes(s,f,RiemannDual(z,1)))
+
+function stieltjes(S::Space{<:SqrtLine},f,z)
+    if domain(S) == SqrtLine()
+        # TODO: rename tocanonical
+        s = setcanonicaldomain(S)
+        stieltjes(s,f,ifourtoone(1,z))+stieltjes(s,f,ifourtoone(2,z))+
+            stieltjes(s,f,ifourtoone(3,z))+stieltjes(s,f,ifourtoone(4,z))-
+            2fpstieltjes(s,f,1)-2fpstieltjes(s,f,-1)
+    else
+        stieltjes(setdomain(S,SqrtLine()),f,mappoint(domain(S),SqrtLine(),z))
+    end
+end
+
+function stieltjesmoment!(ret,S::PolynomialSpace{<:SqrtLine},z,filter=identity)
+    if domain(S) == SqrtLine()
+        s = setcanonicaldomain(S)
+        u = complex(undirected(z))
+        tmp = similar(ret)
+        stieltjesmoment!(ret, s, ifourtoone(1,z),filter)
+        stieltjesmoment!(tmp, s, ifourtoone(2,u),filter); ret .+= tmp
+        stieltjesmoment!(tmp, s, ifourtoone(3,u),filter); ret .+= tmp
+        stieltjesmoment!(tmp, s, ifourtoone(4,u),filter); ret .+= tmp
+        fpleftstieltjesmoment!(tmp, s); ret .-= 2 .* tmp
+        fprightstieltjesmoment!(tmp, s); ret .-= 2 .* tmp
+        ret
+    else
+        stieltjesmoment!(ret,setdomain(S,SqrtLine()),mappoint(domain(S),SqrtLine(),z),filter)
+    end
+end
+
+
+fprightstieltjesmoment!(V, sp::PolynomialSpace{<:SqrtLine}) = fill!(V,0)
+fpleftstieltjesmoment!(V, sp::PolynomialSpace{<:SqrtLine}) = fill!(V,0)
 
 end # module

@@ -6,7 +6,7 @@ version = "0.1.0"
 [deps]
 ApproxFun = "28f2ccd6-bb30-5033-b560-165f7b14dc2f"
 ApproxFunBase = "fbd15aa5-315a-5a7d-a8a4-24992e37be05"
-DualNumbers = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 RiemannHilbert = "79305c5b-9889-52e9-bdbd-56f883c71fe0"
 SingularIntegralEquations = "e094c991-5a90-5477-8896-c1e4c9552a1a"
 
