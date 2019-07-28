@@ -38,15 +38,15 @@ end
     @test cauchy(f,exp(-im*π/4)+10eps())-cauchy(f,exp(-im*π/4)-10eps()) ≈ f(exp(-im*π/4))
 
     f = Fun(α -> -k*sin(θ₀)/(γ(α)*(α-k*cos(θ₀))), Legendre(SqrtLine{-1/4}()))
-
     C = fpcauchymatrix(space(f), ncoefficients(f), ncoefficients(f))
     pts = collocationpoints(space(f), ncoefficients(f))
+    @test (C*f.coefficients)[50] ≈ cauchy(f,pts[50]-eps()im)
     @test (C*f.coefficients)[100] ≈ cauchy(f,pts[100]-eps()im)
 end
 
 @testset "RHP" begin
     S = Legendre(SqrtLine{-1/4}())
-    n = 300
+    n = 256
     pts = collocationpoints(S, n)
     Cm = fpcauchymatrix(S,n,n)
     Cp = I + Cm
@@ -54,6 +54,13 @@ end
     θ₀ = 0.1
     γ = α -> isinf(α) ? complex(Inf) : im*sqrt(k-α)*sqrt(α+k)
     f = α -> isinf(α) ? zero(α) : -k*sin(θ₀)/(γ(α)*(α-k*cos(θ₀)))
+
+    Hp = α -> k*sin(θ₀)/(α-k*cos(θ₀)) * (1/sqrt(α+k) - 1/sqrt(k+k*cos(θ₀)))
+    Hm = α -> k*sin(θ₀) / (sqrt(k+k*cos(θ₀))*(α-k*cos(θ₀)))
+    f = Fun(α -> -sqrt(α+k)Hp(α)+Hm(α)/(im*sqrt(k-α)), S, n)
+    (Cm*v.coefficients)[50] , cauchy(v,pts[50]-eps()im)
+
     L = Diagonal(inv.(γ.(pts)))*Cp .+ Cm 
+    norm(L*v.coefficients .- f.(pts))
     u = [fill(1.0,1,n); L[2:end-1,:]; ((-1.0).^(0:n-1))'] \ f.(pts)
 end
