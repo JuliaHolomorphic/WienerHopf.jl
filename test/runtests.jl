@@ -5,11 +5,16 @@ import WienerHopf: fourtoone, ifourtoone
 
 @testset "SqrtLine" begin
     @test ifourtoone(fourtoone(0.1)) ≈ ifourtoone(1,fourtoone(0.1)) ≈ 0.1
+    @test ifourtoone(fourtoone(-0.1)) ≈ ifourtoone(1,fourtoone(-0.1)) ≈ -0.1
     @test fourtoone(ifourtoone(1,0.1+0.1im)) ≈ fourtoone(ifourtoone(2,0.1+0.1im)) ≈ 
         fourtoone(ifourtoone(3,0.1+0.1im)) ≈ fourtoone(ifourtoone(4,0.1+0.1im)) ≈ 0.1+0.1im
+        @test fourtoone(ifourtoone(1,-0.1-0.1im)) ≈ fourtoone(ifourtoone(2,-0.1-0.1im)) ≈ 
+        fourtoone(ifourtoone(3,-0.1-0.1im)) ≈ fourtoone(ifourtoone(4,-0.1-0.1im)) ≈ -0.1-0.1im        
 
     @test angle(fromcanonical(SqrtLine{1/4}(), 0.1)) ≈ 0.7853981633974483
+    @test angle(fromcanonical(SqrtLine{1/4}(), -0.1)) ≈ 0.7853981633974483-π
     @test isreal(tocanonical(SqrtLine{1/4}(), 0.1exp(im*π/4)))
+    @test isreal(tocanonical(SqrtLine{1/4}(), -0.1exp(im*π/4)))
 
     f = Fun(x -> 1/sqrt(x-im) + 1/(x-im) + 1/sqrt(x+im-1) + 1/(x+im-1), SqrtLine())
     @test ncoefficients(f) ≤ 250 # spectral convergence
@@ -19,7 +24,9 @@ end
 @testset "SqrtLine Cauchy" begin
     f = Fun(x -> 1/sqrt(x-im) + 1/(x-im) + 1/sqrt(x+im-1) + 1/(x+im-1), SqrtLine())
     @test cauchy(f, 1+im) ≈ 1/sqrt((1+im)+im-1) + 1/((1+im)+im-1) 
+    @test cauchy(f, -1+im) ≈ 1/sqrt((-1+im)+im-1) + 1/((-1+im)+im-1) 
     @test cauchy(f, 1-im) ≈ -1/sqrt((1-im)-im) - 1/((1-im)-im) 
+    @test cauchy(f, -1-im) ≈ -1/sqrt((-1-im)-im) - 1/((-1-im)-im) 
 
     f = Fun(x -> 1/sqrt(x-im) + 1/(x-im) + 1/sqrt(x+im-1) + 1/(x+im-1), Legendre(SqrtLine()))
     @test cauchy(f, 1+im) ≈ 1/sqrt((1+im)+im-1) + 1/((1+im)+im-1) 
