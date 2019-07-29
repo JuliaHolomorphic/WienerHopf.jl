@@ -1,5 +1,6 @@
 using WienerHopf, ApproxFun, RiemannHilbert, SingularIntegralEquations, Test
-import RiemannHilbert: orientedleftendpoint, fpcauchymatrix, collocationpoints, evaluationmatrix!
+import  ApproxFun: mappoint, setcanonicaldomain
+import RiemannHilbert: orientedleftendpoint, fpcauchymatrix, fpstieltjesmatrix, collocationpoints, evaluationmatrix!, undirected
 import WienerHopf: fourtoone, ifourtoone
 
 
@@ -44,11 +45,14 @@ end
     @test f(exp(-im*π/4)) ≈ (α->(-k*sin(θ₀)/(γ(α)*(α-k*cos(θ₀)))))(exp(-im*π/4))
     @test cauchy(f,exp(-im*π/4)+10eps())-cauchy(f,exp(-im*π/4)-10eps()) ≈ f(exp(-im*π/4))
 
-    f = Fun(α -> -k*sin(θ₀)/(γ(α)*(α-k*cos(θ₀))), Legendre(SqrtLine{-1/4}()))
-    C = fpcauchymatrix(space(f), ncoefficients(f), ncoefficients(f))
+    S = Legendre(SqrtLine{-1/4}())
+    f = Fun(α -> -k*sin(θ₀)/(γ(α)*(α-k*cos(θ₀))), S)
+    C = fpcauchymatrix(S, ncoefficients(f), ncoefficients(f))
+    @test norm(C) ≤ 1500
     pts = collocationpoints(space(f), ncoefficients(f))
-    @test (C*f.coefficients)[50] ≈ cauchy(f,pts[50]-eps()im)
-    @test (C*f.coefficients)[100] ≈ cauchy(f,pts[100]-eps()im)
+    @test (C*f.coefficients)[50] ≈ cauchy(f,pts[50]-10eps()im) ≈ cauchy(f,pts[50]⁻)
+    @test (C*f.coefficients)[100] ≈ cauchy(f,pts[100]-10eps()im) ≈ cauchy(f,pts[100]⁻)
+    @test (C*f.coefficients)[229] ≈ cauchy(f,pts[229]-10eps()im) ≈ cauchy(f,pts[229]⁻)
 end
 
 @testset "RHP" begin
@@ -64,8 +68,12 @@ end
 
     Hp = α -> k*sin(θ₀)/(α-k*cos(θ₀)) * (1/sqrt(α+k) - 1/sqrt(k+k*cos(θ₀)))
     Hm = α -> k*sin(θ₀) / (sqrt(k+k*cos(θ₀))*(α-k*cos(θ₀)))
-    f = Fun(α -> -sqrt(α+k)Hp(α)+Hm(α)/(im*sqrt(k-α)), S, n)
-    (Cm*v.coefficients)[50] , cauchy(v,pts[50]-eps()im)
+
+    Φdp = α -> -sqrt(α+k)Hp(α)
+    Dm = α -> -Hm(α)/(im*sqrt(k-α))
+    v = Fun(α -> Φdp(α)-Dm(α), S)
+    @test cauchy(v,0.0+10eps()im) + γ(0.0)*Dm(0.0) ≈ Φdp(0.0) + γ(0.0)*Dm(0.0) ≈ -k*sin(θ₀)/(0.0-k*cos(θ₀))
+    @test (Cm*v.coefficients)[50] ≈ cauchy(v,pts[50]-100eps()im)
 
     L = Diagonal(inv.(γ.(pts)))*Cp .+ Cm 
     norm(L*v.coefficients .- f.(pts))

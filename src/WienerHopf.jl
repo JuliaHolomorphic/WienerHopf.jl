@@ -124,8 +124,9 @@ function stieltjes(S::Space{<:SqrtLine},f,z)
     if domain(S) == SqrtLine()
         # TODO: rename tocanonical
         s = setcanonicaldomain(S)
-        stieltjes(s,f,ifourtoone(1,z))+stieltjes(s,f,ifourtoone(2,z))+
-            stieltjes(s,f,ifourtoone(3,z))+stieltjes(s,f,ifourtoone(4,z))-
+        u = undirected(z)
+        stieltjes(s,f,ifourtoone(1,z))+stieltjes(s,f,ifourtoone(2,u))+
+            stieltjes(s,f,ifourtoone(3,u))+stieltjes(s,f,ifourtoone(4,u))-
             2fpstieltjes(s,f,1)-2fpstieltjes(s,f,-1)
     else
         stieltjes(setdomain(S,SqrtLine()),f,mappoint(domain(S),SqrtLine(),z))
