@@ -1,10 +1,17 @@
 using WienerHopf, ApproxFun, RiemannHilbert, SingularIntegralEquations, Test
-import  ApproxFun: mappoint, setcanonicaldomain
-import RiemannHilbert: orientedleftendpoint, fpcauchymatrix, fpstieltjesmatrix, collocationpoints, evaluationmatrix!, undirected
-import WienerHopf: fourtoone, ifourtoone
+import ApproxFun: mappoint, setcanonicaldomain
+import RiemannHilbert: orientedleftendpoint, fpcauchymatrix, fpstieltjesmatrix, collocationpoints, evaluationmatrix!, undirected, evaluationmatrix
+import WienerHopf: fourtoone, ifourtoone, sqrtline_tocanonical
 
 
 @testset "SqrtLine" begin
+    @test ifourtoone(0.001-eps()) ≈ ifourtoone(0.001+eps()) # taylor v explicit
+    @test ifourtoone(-0.001-eps()) ≈ ifourtoone(-0.001+eps()) # taylor v explicit
+    @test ifourtoone(-0.001im-eps()im) ≈ ifourtoone(-0.001im+eps()im) # taylor v explicit
+    @test sqrtline_tocanonical(-eps()) ≈ sqrtline_tocanonical(eps()) atol=1E-15
+    @test sqrtline_tocanonical(-eps()) ≈ sqrtline_tocanonical(0) atol=1E-15
+    @test 0 ≈ sqrtline_tocanonical(0) atol=1E-15
+
     @test ifourtoone(fourtoone(0.1)) ≈ ifourtoone(1,fourtoone(0.1)) ≈ 0.1
     @test ifourtoone(fourtoone(-0.1)) ≈ ifourtoone(1,fourtoone(-0.1)) ≈ -0.1
     @test fourtoone(ifourtoone(1,0.1+0.1im)) ≈ fourtoone(ifourtoone(2,0.1+0.1im)) ≈ 
@@ -59,8 +66,9 @@ end
     S = Legendre(SqrtLine{-1/4}())
     n = 256
     pts = collocationpoints(S, n)
-    Cm = fpcauchymatrix(S,n,n)
-    Cp = I + Cm
+    Cm = fpcauchymatrix(S,n,n)[2:end-1,:]
+    E = evaluationmatrix(S,pts[2:end-1],n)
+    Cp = E + Cm
     k = 1
     θ₀ = 0.1
     γ = α -> isinf(α) ? complex(Inf) : im*sqrt(k-α)*sqrt(α+k)
@@ -71,11 +79,34 @@ end
 
     Φdp = α -> -sqrt(α+k)Hp(α)
     Dm = α -> -Hm(α)/(im*sqrt(k-α))
+
+    @test Φdp(0.0) + γ(0.0)Dm(0.0) ≈ -k*sin(θ₀)/(0.0-k*cos(θ₀))
+
+    v = Fun(α -> Φdp(α*exp(-im*π/4))-Dm(α*exp(-im*π/4)), SqrtLine())
+    @which evaluate(v.coefficients,space(v),0.0)
+    @which tocanonical(space(v),0.000001)
+    @test v(0.0) ≈ Φdp(0.0)-Dm(0.0)
+    @test cauchy(v,0.1+10eps()im)-cauchy(v,0.1-10eps()im) ≈ v(0.1)
+    @test cauchy(v,-0.1+10eps()im)-cauchy(v,-0.1-10eps()im) ≈ v(-0.1)
+    @test cauchy(v,100eps()im)-cauchy(v,-100eps()im) ≈ v(0.0)
+    
+
     v = Fun(α -> Φdp(α)-Dm(α), S)
+    @test cauchy(v,2.0) ≈ Φdp(2.0)
+    @test cauchy(v,-2.0) ≈ Dm(-2.0)
+
+    @test Φdp(im) ≈ cauchy(v,im)
+    h = 0.00001; @test Φdp(h) ≈ cauchy(v,h)
+    h = 0.00001im; @test Φdp(h) ≈ cauchy(v,h)
+
+    @test cauchy(v,pts[50]+100eps()im)-cauchy(v,pts[50]-100eps()im) ≈ v(pts[50])
+
     @test cauchy(v,0.0+10eps()im) + γ(0.0)*Dm(0.0) ≈ Φdp(0.0) + γ(0.0)*Dm(0.0) ≈ -k*sin(θ₀)/(0.0-k*cos(θ₀))
     @test (Cm*v.coefficients)[50] ≈ cauchy(v,pts[50]-100eps()im)
+    @test (Cp*v.coefficients)[50] ≈ cauchy(v,pts[50]+100eps()im)
 
-    L = Diagonal(inv.(γ.(pts)))*Cp .+ Cm 
-    norm(L*v.coefficients .- f.(pts))
-    u = [fill(1.0,1,n); L[2:end-1,:]; ((-1.0).^(0:n-1))'] \ f.(pts)
+    L = Diagonal(inv.(γ.(pts[2:end-1])))*Cp .+ Cm 
+    norm(L*v.coefficients .- f.(pts[2:end-1]))
+    u = [fill(1.0,1,n); L; ((-1.0).^(0:n-1))'] \ f.(pts)
+    @test u ≈ v.coefficients
 end

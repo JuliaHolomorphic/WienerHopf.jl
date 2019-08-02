@@ -56,7 +56,11 @@ convert(::Type{IT},::AnyDomain) where {IT<:SqrtLine}=SqrtLine(NaN,NaN)
 isempty(::SqrtLine) = false
 
 fourtoone(x) = (x+x^3)/(1-x^2)^2
-ifourtoone(α) = (1 + sqrt(1 + 16α^2) - sqrt(2)sqrt(1 + sqrt(1 + 16α^2)))/(4α)
+ifourtoone(α) = if abs(α) ≤ 0.001
+        α - 3α^3 + 22α^5 # Taylor series
+    else
+        (1 + sqrt(1 + 16α^2) - sqrt(2)sqrt(1 + sqrt(1 + 16α^2)))/(4α)
+    end
 
 function ifourtoone(k, α) 
     x = ifourtoone(α)
