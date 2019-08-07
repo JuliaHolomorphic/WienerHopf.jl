@@ -10,10 +10,11 @@ import SingularIntegralEquations: stieltjes, stieltjesmoment!, undirected
 import Base: convert, isempty, +, -, *, ==    
 import ForwardDiff: derivative
 import RiemannHilbert: RiemannDual, finitepart, 
-            fpleftstieltjesmoment!, fprightstieltjesmoment!
+            fpleftstieltjesmoment!, fprightstieltjesmoment!,
+            collocationpoints, fpcauchymatrix, evaluationmatrix
             
 
-export SqrtLine
+export SqrtLine, collocationpoints, fpcauchymatrix, evaluationmatrix
 
 """
     SqrtLine{a}(c)

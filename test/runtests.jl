@@ -109,4 +109,13 @@ end
     norm(L*v.coefficients .- f.(pts[2:end-1]))
     u = [fill(1.0,1,n); L; ((-1.0).^(0:n-1))'] \ f.(pts)
     @test u ≈ v.coefficients
+
+    L = Cp .+ Diagonal(γ.(pts[2:end-1]))*Cm 
+    g = α -> isinf(α) ? zero(α) : -k*sin(θ₀)/(α-k*cos(θ₀))
+    u = [fill(1.0,1,n); L; ((-1.0).^(0:n-1))'] \ g.(pts)
+    @test u ≈ v.coefficients
+
+    L = E .+ Diagonal(γ.(pts[2:end-1]) .+ 1)*Cm 
+    u = [fill(1.0,1,n); L; ((-1.0).^(0:n-1))'] \ g.(pts)
+    @test u ≈ v.coefficients
 end
