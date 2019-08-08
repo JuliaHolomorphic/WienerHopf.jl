@@ -13,4 +13,4 @@ SingularIntegralEquations = "e094c991-5a90-5477-8896-c1e4c9552a1a"
 [compat]
 ApproxFun = "0.11.2"
 SingularIntegralEquations = "0.4"
-RiemannHilbert = "0.0.1"
+RiemannHilbert = "0.0.1, 0.0.2"
