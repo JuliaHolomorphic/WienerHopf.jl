@@ -11,6 +11,8 @@ RiemannHilbert = "79305c5b-9889-52e9-bdbd-56f883c71fe0"
 SingularIntegralEquations = "e094c991-5a90-5477-8896-c1e4c9552a1a"
 
 [compat]
-ApproxFun = "0.11.2"
-SingularIntegralEquations = "0.4"
-RiemannHilbert = "0.0.1, 0.0.2"
+ApproxFun = "0.11.8"
+ForwardDiff = "0.10"
+RiemannHilbert = "0.0.1, 0.0.2, 0.0.3"
+SingularIntegralEquations = "0.6"
+julia = "1.3"
