@@ -13,6 +13,6 @@ SingularIntegralEquations = "e094c991-5a90-5477-8896-c1e4c9552a1a"
 [compat]
 ApproxFun = "0.11.8"
 ForwardDiff = "0.10"
-RiemannHilbert = "0.0.1, 0.0.2, 0.0.3"
+RiemannHilbert = "0.1"
 SingularIntegralEquations = "0.6"
 julia = "1.3"
